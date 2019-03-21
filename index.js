@@ -1,7 +1,8 @@
 const express = require('express')
+const cors = require('cors')
 const app = express()
 const bodyParser = require('body-parser')
-
+app.use(cors())
 app.use(bodyParser.json())
 
 let threads = [ {
@@ -29,6 +30,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/threads', (req, res) => {
+  console.log("yritetään palauttaa jotain")
   res.json(threads)
 })
 
@@ -70,6 +72,7 @@ app.post('/threads', (req, res) => {
   res.json(thread)
 })
 
-const port = 3001
-app.listen(port)
-console.log(`Server running on port ${port}`)
+const port = process.env.PORT || 3001
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`)
+})
