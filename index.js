@@ -4,6 +4,7 @@ const app = express()
 const bodyParser = require('body-parser')
 app.use(cors())
 app.use(bodyParser.json())
+app.use(express.static('build'))
 
 let threads = [ {
     id: 1,
@@ -27,6 +28,7 @@ let threads = [ {
 
 app.get('/', (req, res) => {
   res.send('hello world')
+  console.log("pipapo")
 })
 
 app.get('/threads', (req, res) => {
