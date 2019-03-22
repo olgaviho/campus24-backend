@@ -1,80 +1,108 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const app = express()
 const bodyParser = require('body-parser')
+var morgan = require('morgan')
+var logger = morgan('tiny')
 app.use(cors())
-app.use(bodyParser.json())
+
 app.use(express.static('build'))
+app.use(bodyParser.json())
+app.use(logger)
 
-let threads = [ {
-    id: 1,
-    title: "HTML",
-    message: 'HTML on helppoa',
-    date: '2017-12-10T17:30:31.098Z',
-  },
-  {
-    id: 2,
-    title: "selain",
-    message: 'Selain pystyy suorittamaan vain javascriptiä',
-    date: '2017-12-10T18:39:34.091Z',
-  },
-  {
-    id: 3,
-    title: "metodit",
-    message: 'HTTP-protokollan tärkeimmät metodit ovat GET ja POST',
-    date: '2017-12-10T19:20:14.298Z',
-  },
-]
+const Thread = require('./models/thread')
 
-app.get('/', (req, res) => {
-  res.send('hello world')
+
+app.get('/api', (req, res) => {
   console.log("pipapo")
 })
 
-app.get('/threads', (req, res) => {
-  console.log("yritetään palauttaa jotain")
-  res.json(threads)
+app.get('/api/threads', (req, res) => {
+  Thread.find({}).then(threads => {
+    res.json(threads.map(thread => thread.toJSON()))
+  })
 })
 
-app.get('/threads/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const thread = threads.find(t => t.id === id)
-
-  if (thread) {
-    res.json(thread)
-  } else {
-    res.status(404).end()
-  }
+app.get('/api/threads/:id', (req, res, next) => {
+  Thread.findById(req.params.id).then(thread => {
+    if (thread) {
+      res.json(thread.toJSON())
+    } else {
+      res.status(204).end()
+    }
+  })
+    .catch(error => {
+      next(error)
+    })
 })
 
-app.delete('/threads/:id', (req, res) => {
-  const id = Number(req.params.id)
-  threads = threads.filter(t => t.id !== id)
-
-  res.status(204).end()
+app.delete('/api/threads/:id', (req, res, next) => {
+  Thread.findByIdAndRemove(req.params.id)
+    .then(result => {
+      res.status(204).end()
+    })
+    .catch(next)
 })
 
-app.post('/threads', (req, res) => {
+app.post('/api/threads', (req, res, next) => {
   const body = req.body
 
-  if (!body.title || !body.message) {
+  if (!body.title || !body.message || body.title === undefined || body.message === undefined) {
     return res.status(400).json({
       error: 'content missing'
     })
   }
 
-  const thread = {
+  const thread = new Thread({
     title: body.title,
     message: body.message,
     date: new Date(),
-    id: Math.floor(Math.random()*10000)
-  }
+  })
 
-  threads = threads.concat(thread)
-  res.json(thread)
+  thread.save().then(savedThread => {
+    res.json(savedThread.toJSON())
+  })
+    .catch(next)
 })
 
-const port = process.env.PORT || 3001
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`)
+app.put('/api/threads/:id', (req, res, next) => {
+  const body = req.body
+
+  Thread.findById(req.params.id).then(thread => {
+    if (thread === null) {
+
+      throw "Thread deleted"
+    }
+    thread.message = body.message
+
+    thread.save().then(() => {
+      res.json(thread.toJSON())
+    })
+      .catch(error => next(error))
+  }).catch(error => res.status(400).json({ error }))
+})
+
+
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, req, res, next) => {
+  console.log('errorhandler', error)
+
+  if (error.name === 'CastError' && error.kind === 'ObjectId') {
+    return res.status(400).send({ error: 'malformatted id' })
+
+  }
+  next(error)
+}
+
+app.use(errorHandler)
+
+const PORT = process.env.PORT
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
 })
