@@ -1,11 +1,21 @@
 const threadsRouter = require('express').Router()
 const Thread = require('../models/thread')
+const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+
+const getTokenFrom = req => {
+  const auth = req.get('authorization')
+  if (auth && auth.toLowerCase().startsWith('bearer ')) {
+    return auth.substring(7)
+  }
+  return null
+}
 
 
-threadsRouter.get('/', (req, res) => {
-  Thread.find({}).then(threads => {
-    res.json(threads.map(thread => thread.toJSON()))
-  })
+threadsRouter.get('/', async (req, res) => {
+  const threads = await Thread
+    .find({}).populate('user', { username: 1, name: 1 })
+  res.json(threads.map(t => t.toJSON()))
 })
 
 threadsRouter.get('/:id', (req, res, next) => {
@@ -29,25 +39,39 @@ threadsRouter.delete('/:id', (req, res, next) => {
     .catch(next)
 })
 
-threadsRouter.post('/', (req, res, next) => {
+threadsRouter.post('/', async (req, res, next) => {
   const body = req.body
+  const token = getTokenFrom(req)
 
   if (!body.title || !body.message || body.title === undefined || body.message === undefined) {
     return res.status(400).json({
       error: 'content missing'
     })
   }
+  try {
+    const decodedToken = jwt.verify(token, process.env.SECRET)
+    if (!token || !decodedToken.id) {
+      return res.status(401).json({ error: 'token missing or invalid'})
+    }
 
-  const thread = new Thread({
-    title: body.title,
-    message: body.message,
-    date: new Date(),
-  })
+    const user = await User.findById(body.userId)
+    console.log(user)
 
-  thread.save().then(savedThread => {
+    const thread = new Thread({
+      title: body.title,
+      message: body.message,
+      date: new Date(),
+      user: user._id
+    })
+
+
+    const savedThread = await thread.save()
+    user.threads = user.threads.concat(savedThread._id)
+    await user.save()
     res.json(savedThread.toJSON())
-  })
-    .catch(next)
+  } catch (e) {
+    next(e)
+  }
 })
 
 threadsRouter.put('/:id', (req, res, next) => {

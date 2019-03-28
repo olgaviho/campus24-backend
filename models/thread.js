@@ -6,10 +6,10 @@ const threadSchema = new mongoose.Schema({
   title: String,
   message: String,
   date: Date,
-  //user: {
-  //  type: mongoose.Schema.Types.ObjectId,
-  //  ref: 'User'
-  //}
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 })
 
 threadSchema.set('toJSON', {

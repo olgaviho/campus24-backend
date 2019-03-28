@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const app = express()
 const threadsRouter = require('./controllers/threads')
 const usersRouter = require('./controllers/users')
+const loginRouter = require('./controllers/login')
 const middleware = require('./utils/middleware')
 const mongoose = require('mongoose')
 
@@ -23,6 +24,7 @@ app.use(middleware.logger)
 
 app.use('/api/threads', threadsRouter)
 app.use('/api/users', usersRouter)
+app.use('/api/login', loginRouter)
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
 
