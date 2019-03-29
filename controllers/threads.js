@@ -55,7 +55,9 @@ threadsRouter.post('/', async (req, res, next) => {
     }
 
     const user = await User.findById(body.userId)
-    console.log(user)
+    console.log('user', user)
+    console.log('body', body)
+    console.log('userid', body.userId)
 
     const thread = new Thread({
       title: body.title,
