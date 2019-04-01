@@ -5,7 +5,6 @@ const User = require('../models/user')
 usersRouter.get('/', async (req, res) => {
     const users = await User
     .find({}).populate('threads', {title: 1, message: 1})
-    console.log('users', users)
     res.json(users.map(u => u.toJSON()))
 })
 
