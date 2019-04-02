@@ -2,23 +2,20 @@ const mongoose = require('mongoose')
 mongoose.set('useFindAndModify', false)
 
 
-const threadSchema = new mongoose.Schema({
-  title: String,
+const commentSchema = new mongoose.Schema({
   message: String,
   date: Date,
+  thread: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Thread'
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  },
-  comments: [
-    {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Comment'
-    }
-]
+  }
 })
 
-threadSchema.set('toJSON', {
+commentSchema.set('toJSON', {
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString()
     delete returnedObject._id
@@ -27,4 +24,4 @@ threadSchema.set('toJSON', {
 })
 
 
-module.exports = mongoose.model('Thread', threadSchema)
+module.exports = mongoose.model('Comment', commentSchema)

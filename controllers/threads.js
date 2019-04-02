@@ -15,6 +15,8 @@ const getTokenFrom = (req) => {
 threadsRouter.get('/', async (req, res) => {
   const threads = await Thread
     .find({}).populate('user', { username: 1, name: 1 })
+    .find({}).populate('comment', { message: 1 })
+
   res.json(threads.map(t => t.toJSON()))
 })
 
@@ -67,6 +69,7 @@ threadsRouter.post('/', async (req, res, next) => {
 
     const user = await User.findById(body.userId)
 
+
     const thread = new Thread({
       title: body.title,
       message: body.message,
@@ -90,7 +93,6 @@ threadsRouter.put('/:id', async (req, res, next) => {
   const token = getTokenFrom(req)
 
   try {
-
 
     const decodedToken = jwt.verify(token, process.env.SECRET)
     if (!token || !decodedToken) {
