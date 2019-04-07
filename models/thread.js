@@ -12,10 +12,10 @@ const threadSchema = new mongoose.Schema({
   },
   comments: [
     {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Comment'
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment'
     }
-]
+  ]
 })
 
 threadSchema.set('toJSON', {

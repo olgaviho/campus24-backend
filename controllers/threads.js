@@ -101,7 +101,7 @@ threadsRouter.put('/:id', async (req, res, next) => {
 
     const thread = await Thread.findById(req.params.id)
     if (thread === null) {
-      throw "Thread deleted"
+      throw 'Thread deleted'
     }
   }
   catch (error) {
@@ -110,8 +110,8 @@ threadsRouter.put('/:id', async (req, res, next) => {
 
   try {
     const thread = await Thread.findById(req.params.id)
-    if (body.message == null) {
-      throw "new message missing"
+    if (body.message === null) {
+      throw 'new message missing'
     }
     thread.message = body.message
     await thread.save()

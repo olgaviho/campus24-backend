@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-if ( process.argv.length<3 ) {
+if (process.argv.length < 3) {
   console.log('give password as argument')
   process.exit(1)
 }
@@ -21,12 +21,12 @@ const threadSchema = new mongoose.Schema({
 const Thread = mongoose.model('Thread', threadSchema)
 
 const thread = new Thread({
-    title: 'Java',
-    message: 'Java on ärsyttävää',
-    date: new Date(),
+  title: 'Java',
+  message: 'Java on ärsyttävää',
+  date: new Date(),
 })
 
 thread.save().then(response => {
-  console.log('thread saved!');
-  mongoose.connection.close();
+  console.log('thread saved!')
+  mongoose.connection.close()
 })

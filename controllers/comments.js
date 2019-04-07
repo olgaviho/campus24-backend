@@ -16,7 +16,7 @@ const getTokenFrom = (req) => {
 commentsRouter.get('/', async (req, res) => {
   const comments = await Comment
     .find({}).populate('user', { username: 1, name: 1 })
-    .find({}).populate('thread', { title: 1, message: 1})
+    .find({}).populate('thread', { title: 1, message: 1 })
 
   res.json(comments.map(c => c.toJSON()))
 })
