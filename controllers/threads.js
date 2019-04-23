@@ -49,8 +49,7 @@ threadsRouter.delete('/:id', async (req, res, next) => {
   catch (e) {
     next(e)
   }
-}
-)
+})
 
 threadsRouter.post('/', async (req, res, next) => {
   const body = req.body

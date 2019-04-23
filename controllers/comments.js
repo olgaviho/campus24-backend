@@ -76,5 +76,58 @@ commentsRouter.post('/', async (req, res, next) => {
 })
 
 
+commentsRouter.delete('/:id', async (req, res, next) => {
+
+  const token = getTokenFrom(req)
+
+  try {
+    const decodedToken = jwt.verify(token, process.env.SECRET)
+    if (!token || !decodedToken.id) {
+      res.status(401).json({ error: 'token missing or invalid ' })
+    }
+
+    await Comment.findByIdAndRemove(req.params.id)
+    res.status(204).end()
+  }
+  catch (e) {
+    next(e)
+  }
+})
+
+commentsRouter.put('/:id', async (req, res, next) => {
+  const body = req.body
+  const token = getTokenFrom(req)
+
+  try {
+
+    const decodedToken = jwt.verify(token, process.env.SECRET)
+    if (!token || !decodedToken) {
+      res.status(401).json({ error: 'token missing or invalid' })
+    }
+
+    const comment = await Comment.findById(req.params.id)
+    if (comment === null) {
+      throw 'Comment deleted'
+    }
+  }
+  catch (error) {
+    res.status(400).json({ error: 'token can be missing or invalid' })
+  }
+
+  try {
+    const comment = await Comment.findById(req.params.id)
+    if (body.message === null) {
+      throw 'new message missing'
+    }
+    comment.message = body.message
+    await comment.save()
+    res.json(comment.toJSON())
+  }
+  catch (error) {
+    next(error)
+  }
+})
+
+
 
 module.exports = commentsRouter
