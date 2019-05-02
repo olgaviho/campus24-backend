@@ -1,6 +1,5 @@
 const threadsRouter = require('express').Router()
 const Thread = require('../models/thread')
-const User = require('../models/user')
 const jwt = require('jsonwebtoken')
 
 const getTokenFrom = (req) => {
@@ -13,11 +12,9 @@ const getTokenFrom = (req) => {
 
 
 threadsRouter.get('/', async (req, res) => {
-  const threads = await Thread
-    .find({}).populate('user', { username: 1, name: 1 })
-    .find({}).populate('comment', { message: 1 })
-
-  res.json(threads.map(t => t.toJSON()))
+  Thread.find({}).then(threads => {
+    res.json(threads.map(thread => thread.toJSON()))
+  })
 })
 
 threadsRouter.get('/:id', (req, res, next) => {
@@ -66,20 +63,17 @@ threadsRouter.post('/', async (req, res, next) => {
       return res.status(401).json({ error: 'token missing or invalid' })
     }
 
-    const user = await User.findById(body.userId)
-
 
     const thread = new Thread({
       title: body.title,
       message: body.message,
       date: new Date(),
-      user: user._id
+      user: body.userId
     })
 
 
     const savedThread = await thread.save()
-    user.threads = user.threads.concat(savedThread._id)
-    await user.save()
+
     res.json(savedThread.toJSON())
   } catch (e) {
     next(e)

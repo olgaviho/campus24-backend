@@ -5,14 +5,8 @@ mongoose.set('useFindAndModify', false)
 const commentSchema = new mongoose.Schema({
   message: String,
   date: Date,
-  thread: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Thread'
-  },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
+  thread: String,
+  user: String,
 })
 
 commentSchema.set('toJSON', {

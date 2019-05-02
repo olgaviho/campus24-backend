@@ -8,18 +8,6 @@ const userSchema = mongoose.Schema({
   },
   name: String,
   passwordHash: String,
-  threads: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Thread'
-    }
-  ],
-  comments: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Comment'
-    }
-  ]
 })
 
 userSchema.set('toJSON', {

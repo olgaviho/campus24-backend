@@ -12,10 +12,9 @@ const getTokenFrom = (req) => {
 }
 
 usersRouter.get('/', async (req, res) => {
-  const users = await User
-    .find({}).populate('threads', { title: 1, message: 1 })
-    .find({}).populate('comments', { message: 1 })
-  res.json(users.map(u => u.toJSON()))
+  User.find({}).then(users => {
+    res.json(users.map(user => user.toJSON()))
+  })
 })
 
 usersRouter.post('/', async (req, res, next) => {
