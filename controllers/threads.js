@@ -63,7 +63,6 @@ threadsRouter.post('/', async (req, res, next) => {
       return res.status(401).json({ error: 'token missing or invalid' })
     }
 
-
     const thread = new Thread({
       title: body.title,
       message: body.message,
