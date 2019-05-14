@@ -38,7 +38,6 @@ if (process.env.NODE_ENV === 'test') {
 const unknownEndpoint = (req, res) => {
   console.log(__dirname)
   res.sendFile(path.join(__dirname+'/build/index.html'))
-  //res.status(404).send({ error: 'unknown endpoint' })
 }
 
 app.use(middleware.errorHandler)
