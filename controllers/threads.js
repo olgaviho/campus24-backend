@@ -4,6 +4,14 @@ const jwt = require('jsonwebtoken')
 
 const getTokenFrom = (req) => {
   const auth = req.get('authorization')
+
+  const usertoken = req.headers.authorization
+  const token = usertoken.split(' ')
+  console.log('token', token)
+  const decoded = jwt.verify(token[1], process.env.SECRET)
+  console.log('decoded', decoded)
+
+
   if (auth && auth.toLowerCase().startsWith('bearer ')) {
     return auth.substring(7)
   }
@@ -49,7 +57,7 @@ threadsRouter.delete('/:id', async (req, res, next) => {
 })
 
 threadsRouter.post('/', async (req, res, next) => {
-  const body = req.body
+  const body = req.body.newObject
   const token = getTokenFrom(req)
 
   if (!body.title || !body.message || body.title === undefined || body.message === undefined) {
