@@ -4,15 +4,8 @@ const jwt = require('jsonwebtoken')
 
 const getTokenFrom = (req) => {
   const auth = req.get('authorization')
-
-  const usertoken = req.headers.authorization
-  const token = usertoken.split(' ')
-  console.log('token', token)
-  const decoded = jwt.verify(token[1], process.env.SECRET)
-  console.log('decoded', decoded)
-
-
   if (auth && auth.toLowerCase().startsWith('bearer ')) {
+
     return auth.substring(7)
   }
   return null
@@ -40,12 +33,33 @@ threadsRouter.get('/:id', (req, res, next) => {
 
 threadsRouter.delete('/:id', async (req, res, next) => {
 
+
   const token = getTokenFrom(req)
 
+  console.log('id', req.params.id)
+
+  let thread = null
+
   try {
+    thread = await Thread.findById(req.params.id)
+  } catch (e) {
+    next(e)
+  }
+
+  try {
+
+    console.log('thread', thread)
+
     const decodedToken = jwt.verify(token, process.env.SECRET)
-    if (!token || !decodedToken.id) {
-      res.status(401).json({ error: 'token missing or invalid ' })
+    console.log('decoded token', decodedToken)
+    if (!token || !decodedToken.id ) {
+      res.status(401).json({ error: 'token missing' })
+    }
+
+    console.log('decodedToken', decodedToken.id, 'user', thread.user)
+
+    if (decodedToken.id !== thread.user) {
+      res.status(401).json({ error: 'token invalid' })
     }
 
     await Thread.findByIdAndRemove(req.params.id)
@@ -57,7 +71,8 @@ threadsRouter.delete('/:id', async (req, res, next) => {
 })
 
 threadsRouter.post('/', async (req, res, next) => {
-  const body = req.body.newObject
+
+  const body = req.body
   const token = getTokenFrom(req)
 
   if (!body.title || !body.message || body.title === undefined || body.message === undefined) {
@@ -88,6 +103,8 @@ threadsRouter.post('/', async (req, res, next) => {
 })
 
 threadsRouter.put('/:id', async (req, res, next) => {
+
+  console.log('req', req)
   const body = req.body
 
   const token = getTokenFrom(req)
@@ -95,6 +112,7 @@ threadsRouter.put('/:id', async (req, res, next) => {
   try {
 
     const decodedToken = jwt.verify(token, process.env.SECRET)
+    console.log('token', token, ' decoded token ', decodedToken)
     if (!token || !decodedToken) {
       res.status(401).json({ error: 'token missing or invalid' })
     }
