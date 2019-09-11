@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken')
 const getTokenFrom = (req) => {
   const auth = req.get('authorization')
   if (auth && auth.toLowerCase().startsWith('bearer ')) {
-
     return auth.substring(7)
   }
   return null
@@ -33,11 +32,7 @@ threadsRouter.get('/:id', (req, res, next) => {
 
 threadsRouter.delete('/:id', async (req, res, next) => {
 
-
   const token = getTokenFrom(req)
-
-  console.log('id', req.params.id)
-
   let thread = null
 
   try {
@@ -48,15 +43,11 @@ threadsRouter.delete('/:id', async (req, res, next) => {
 
   try {
 
-    console.log('thread', thread)
-
     const decodedToken = jwt.verify(token, process.env.SECRET)
-    console.log('decoded token', decodedToken)
+
     if (!token || !decodedToken.id ) {
       res.status(401).json({ error: 'token missing' })
     }
-
-    console.log('decodedToken', decodedToken.id, 'user', thread.user)
 
     if (decodedToken.id !== thread.user) {
       res.status(401).json({ error: 'token invalid' })
@@ -90,9 +81,8 @@ threadsRouter.post('/', async (req, res, next) => {
       title: body.title,
       message: body.message,
       date: new Date(),
-      user: body.userId
+      user: decodedToken.id
     })
-
 
     const savedThread = await thread.save()
 
@@ -104,26 +94,31 @@ threadsRouter.post('/', async (req, res, next) => {
 
 threadsRouter.put('/:id', async (req, res, next) => {
 
-  console.log('req', req)
   const body = req.body
-
   const token = getTokenFrom(req)
+
+  let thread = null
+  try {
+    thread = await Thread.findById(req.params.id)
+
+  } catch (e) {
+    next(e)
+  }
 
   try {
 
     const decodedToken = jwt.verify(token, process.env.SECRET)
-    console.log('token', token, ' decoded token ', decodedToken)
     if (!token || !decodedToken) {
-      res.status(401).json({ error: 'token missing or invalid' })
+      res.status(401).json({ error: 'token missing or' })
     }
 
-    const thread = await Thread.findById(req.params.id)
-    if (thread === null) {
-      throw 'Thread deleted'
+    if (decodedToken.id !== thread.user) {
+      res.status(401).json({ error: 'token invalid' })
     }
+
   }
   catch (error) {
-    res.status(400).json({ error: 'token can be missing or invalid' })
+    next(error)
   }
 
   try {
@@ -131,6 +126,7 @@ threadsRouter.put('/:id', async (req, res, next) => {
     if (body.message === null) {
       throw 'new message missing'
     }
+
     thread.message = body.message
     await thread.save()
     res.json(thread.toJSON())
@@ -139,8 +135,5 @@ threadsRouter.put('/:id', async (req, res, next) => {
     next(error)
   }
 })
-
-
-
 
 module.exports = threadsRouter

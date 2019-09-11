@@ -30,9 +30,7 @@ usersRouter.post('/', async (req, res, next) => {
   try {
 
     const saltRounds = 10
-
     const passwordHash = await bcrypt.hash(body.password, saltRounds)
-
     const user = new User({
       username: body.username,
       name: body.name,
@@ -51,10 +49,22 @@ usersRouter.delete('/:id', async (req, res, next) => {
 
   const token = getTokenFrom(req)
 
+  let userId = null
+  try {
+    const user = await User.findById(req.params.id)
+    userId = user.id
+  } catch (e) {
+    next(e)
+  }
+
   try {
     const decodedToken = jwt.verify(token, process.env.SECRET)
     if (!token || !decodedToken.id) {
-      res.status(401).json({ error: 'token missing or invalid ' })
+      res.status(401).json({ error: 'token missing' })
+    }
+
+    if (decodedToken.id !== userId) {
+      res.status(401).json({ error: 'token invalid' })
     }
 
     await User.findByIdAndRemove(req.params.id)
