@@ -40,6 +40,13 @@ commentsRouter.post('/', async (req, res, next) => {
       error: 'message missing'
     })
   }
+
+  if (!body.threadId || body.threadId === undefined) {
+    return res.status(400).json({
+      error: 'thread missing'
+    })
+  }
+
   try {
     const decodedToken = jwt.verify(token, process.env.SECRET)
     if (!token || !decodedToken.id) {
@@ -49,7 +56,7 @@ commentsRouter.post('/', async (req, res, next) => {
     const comment = new Comment({
       message: body.message,
       date: new Date(),
-      user: body.userId,
+      user: decodedToken.id,
       thread: body.threadId
     })
 
@@ -66,11 +73,24 @@ commentsRouter.post('/', async (req, res, next) => {
 commentsRouter.delete('/:id', async (req, res, next) => {
 
   const token = getTokenFrom(req)
+  let comment = null
 
   try {
+    comment = await Comment.findById(req.params.id)
+  } catch (e) {
+    next(e)
+  }
+
+  try {
+
     const decodedToken = jwt.verify(token, process.env.SECRET)
+
     if (!token || !decodedToken.id) {
-      res.status(401).json({ error: 'token missing or invalid ' })
+      res.status(401).json({ error: 'token missing' })
+    }
+
+    if (decodedToken.id !== comment.user) {
+      res.status(401).json({ error: 'token invalid' })
     }
 
     await Comment.findByIdAndRemove(req.params.id)
@@ -82,23 +102,31 @@ commentsRouter.delete('/:id', async (req, res, next) => {
 })
 
 commentsRouter.put('/:id', async (req, res, next) => {
+
   const body = req.body
   const token = getTokenFrom(req)
+
+  let comment = null
+
+  try {
+    comment = await Comment.findById(req.params.id)
+
+  } catch (e) {
+    next(e)
+  }
 
   try {
 
     const decodedToken = jwt.verify(token, process.env.SECRET)
     if (!token || !decodedToken) {
-      res.status(401).json({ error: 'token missing or invalid' })
+      res.status(401).json({ error: 'token missing' })
+    }
+    if (decodedToken.id !== comment.user) {
+      res.status(401).json({ error: 'token invalid' })
     }
 
-    const comment = await Comment.findById(req.params.id)
-    if (comment === null) {
-      throw 'Comment deleted'
-    }
-  }
-  catch (error) {
-    res.status(400).json({ error: 'token can be missing or invalid' })
+  } catch (e) {
+    next(e)
   }
 
   try {
