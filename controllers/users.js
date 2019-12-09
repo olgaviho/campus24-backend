@@ -17,6 +17,19 @@ usersRouter.get('/', async (req, res) => {
   })
 })
 
+usersRouter.get('/:id', (req, res, next) => {
+  User.findById(req.params.id).then(user => {
+    if (user) {
+      res.json((user).toJSON())
+    } else {
+      res.status(204).end()
+    }
+  })
+    .catch(error => {
+      next(error)
+    })
+})
+
 usersRouter.post('/', async (req, res, next) => {
 
   const body = req.body
