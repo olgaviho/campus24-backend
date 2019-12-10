@@ -74,8 +74,6 @@ test('it is possible to add a thread', async () => {
 
 
   const response = await api.get('/api/threads')
-  console.log('response body length', response.body.length)
-  console.log('initialThreads.length', initialThreads.length)
 
   expect(400)
 

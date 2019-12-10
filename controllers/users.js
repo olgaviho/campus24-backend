@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken')
 
 const getTokenFrom = (req) => {
   const auth = req.get('authorization')
+
+
   if (auth && auth.toLowerCase().startsWith('bearer ')) {
     return auth.substring(7)
   }
@@ -70,8 +72,10 @@ usersRouter.delete('/:id', async (req, res, next) => {
     next(e)
   }
 
+
   try {
     const decodedToken = jwt.verify(token, process.env.SECRET)
+
     if (!token || !decodedToken.id) {
       res.status(401).json({ error: 'token missing' })
     }
