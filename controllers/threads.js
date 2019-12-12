@@ -100,7 +100,6 @@ threadsRouter.put('/:id', async (req, res, next) => {
   const body = req.body
   const token = getTokenFrom(req)
 
-  console.log('JEE SAATIIN TOKEN', token)
 
   let thread = null
   try {
@@ -109,39 +108,26 @@ threadsRouter.put('/:id', async (req, res, next) => {
   } catch (e) {
     next(e)
   }
-  console.log('JEE SAATIIN THREAD', thread)
+
   try {
 
     const decodedToken = jwt.verify(token, process.env.SECRET)
-    console.log('JEE SAATIIN DECODEDTOKEN', decodedToken)
+
     if (!token || !decodedToken) {
-      res.status(401).json({ error: 'token missing' }).end()
-    }
-
-    console.log('ID:t', thread.user, decodedToken.id)
-
-    if (decodedToken.id !== thread.user) {
+      res.status(401).json({ error: 'token missing' })
+    } else if (decodedToken.id !== thread.user) {
       console.log('nyt jäit kiinni!')
-      res.status(401).json({ error: 'token invalid' }).end()
+      res.status(401).json({ error: 'token invalid' })
+    } else {
+      let thread = await Thread.findById(req.params.id)
+      if (body.message === null) {
+        throw 'new message missing'
+      } else {
+        thread.message = body.message
+        const response = await thread.save()
+        res.json(thread.toJSON())
+      }
     }
-
-  }
-  catch (error) {
-    next(error)
-  }
-
-  try {
-    let thread = await Thread.findById(req.params.id)
-
-    console.log('JEE LÖYTY THREAD (taas)', thread)
-
-    if (body.message === null) {
-      throw 'new message missing'
-    }
-
-    thread.message = body.message
-    const response = await thread.save()
-    res.json(thread.toJSON())
   }
   catch (error) {
     next(error)
