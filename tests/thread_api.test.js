@@ -273,8 +273,6 @@ describe('when there is initially some threads saved', () => {
         const threadsBeforeEdit = await helper.threadsInDb()
         const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length-1]
 
-        console.log('tätä threadia halutaan muokata:', threadToEdit)
-
 
         const newUser = {
           name: 'leo',
@@ -298,6 +296,48 @@ describe('when there is initially some threads saved', () => {
         const threadsNow = await api.get('/api/threads')
         const messages = threadsNow.body.map(t => t.message)
         expect(messages).toContain('apina on ruokaa')
+
+      })
+
+      test('it is possible to edit own thread', async () => {
+
+        const newUser = {
+          name: 'leo',
+          username: 'leijona',
+          password: 'nappi'
+        }
+
+        const res = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res.statusCode).toEqual(200)
+
+        token = `bearer ${res.body.token}`
+
+        const newThread = {
+          title: 'apinoista vilä',
+          message: 'apina on ruokaa leijonille',
+          date: new Date().toISOString(),
+        }
+
+        await api
+          .post('/api/threads/')
+          .send(newThread)
+          .set({ Authorization: token })
+
+        const threadsBeforeEdit = await helper.threadsInDb()
+        const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length-1]
+        const message = 'loppuisipa jo testaus'
+
+        await api
+          .put(`/api/threads/${threadToEdit.id}`)
+          .send(message)
+          .set({ Authorization: token })
+          .expect(200)
+
+        const threadsNow = await api.get('/api/threads')
+        const messages = threadsNow.body.map(t => t.message)
+        expect(messages).toContain('loppuisipa jo testaus')
 
       })
     })

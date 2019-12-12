@@ -95,8 +95,6 @@ threadsRouter.post('/', async (req, res, next) => {
 
 threadsRouter.put('/:id', async (req, res, next) => {
 
-  console.log('NYT ALKAA')
-
   const body = req.body
   const token = getTokenFrom(req)
 
@@ -119,13 +117,16 @@ threadsRouter.put('/:id', async (req, res, next) => {
       console.log('nyt jäit kiinni!')
       res.status(401).json({ error: 'token invalid' })
     } else {
-      let thread = await Thread.findById(req.params.id)
-      if (body.message === null) {
-        throw 'new message missing'
+      console.log('päästiin loppuun asti')
+      let thread2 = await Thread.findById(req.params.id)
+      console.log('body.message', body.message)
+      console.log('body', body)
+      if (body.message === null || body.message === undefined) {
+        res.status(400).json({ error: 'message is missing' })
       } else {
-        thread.message = body.message
-        const response = await thread.save()
-        res.json(thread.toJSON())
+        thread2.message = body.message
+        const response = await thread2.save()
+        res.json(thread2.toJSON())
       }
     }
   }
