@@ -134,16 +134,14 @@ threadsRouter.put('/:id', async (req, res, next) => {
     let thread = await Thread.findById(req.params.id)
 
     console.log('JEE LÖYTY THREAD (taas)', thread)
-  
+
     if (body.message === null) {
       throw 'new message missing'
     }
 
     thread.message = body.message
-    await thread.save()
+    const response = await thread.save()
     res.json(thread.toJSON())
-
-    console.log('NYT LOPPU')
   }
   catch (error) {
     next(error)
