@@ -1,11 +1,8 @@
 mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
-
 const api = supertest(app)
-
 const helper = require('./test_helper')
-
 const User = require('../models/user')
 
 
@@ -57,7 +54,7 @@ describe('when there is initially some users saved', () => {
     })
 
     test('fails with statuscode 204 if user does not exist', async () => {
-      const validNonexistingId = await helper.nonExistingId()
+      const validNonexistingId = await helper.nonExistingIdForUser()
 
       await api
         .get(`/api/users/${validNonexistingId}`)
@@ -137,6 +134,8 @@ describe('when there is initially some users saved', () => {
             username: 'elain',
             password: 'polonen'
           }
+
+
           await api
             .post('/api/users')
             .send(newUser)
@@ -175,6 +174,65 @@ describe('when there is initially some users saved', () => {
 
         describe('deleting user ', async () => {
 
+          test('it is not possible to delete other users', async () => {
+
+            const usersAtStart = await helper.usersInDb()
+            const deleteUser = usersAtStart[0]
+
+            const user = {
+              username: 'elain',
+              password: 'polonen'
+            }
+
+            const res = await api
+              .post('/api/login')
+              .send(user)
+            expect(res.statusCode).toEqual(200)
+
+            token = `bearer ${res.body.token}`
+
+            const res2 = await api
+              .delete(`/api/users/${deleteUser.id}`)
+              .set({ Authorization: token })
+
+            expect(res2.statusCode).toEqual(401)
+            const usersNow = await helper.usersInDb()
+
+            expect(res.body.id).not.toBe(deleteUser.id)
+            expect(usersNow.length).toBe(usersAtStart.length)
+          })
+
+          test('it is not possible to delete users without token', async () => {
+
+            const usersAtStart = await helper.usersInDb()
+            const deleteUser = usersAtStart[0]
+
+            const res2 = await api
+              .delete(`/api/users/${deleteUser.id}`)
+
+
+            expect(res2.statusCode).toEqual(400)
+            const usersNow = await helper.usersInDb()
+            expect(usersNow.length).toBe(usersAtStart.length)
+          })
+
+          test('it is not possible to delete users without valid token', async () => {
+
+            const usersAtStart = await helper.usersInDb()
+            const deleteUser = usersAtStart[0]
+
+            token = 'bearer g5086jkf0956406kdj95e68'
+
+            const res2 = await api
+              .delete(`/api/users/${deleteUser.id}`)
+              .set({ Authorization: token })
+
+            expect(res2.statusCode).toEqual(400)
+            const usersNow = await helper.usersInDb()
+            expect(usersNow.length).toBe(usersAtStart.length)
+          })
+
+
           test('it is possible to delete own user', async () => {
 
             const usersAtStart = await helper.usersInDb()
@@ -190,20 +248,14 @@ describe('when there is initially some users saved', () => {
             expect(res.statusCode).toEqual(200)
 
             token = `bearer ${res.body.token}`
-            const config = {
-              headers: { authorization: token },
-            }
 
             const res2 = await api
               .delete(`/api/users/${res.body.id}`)
               .set({ Authorization: token })
 
             expect(res2.statusCode).toEqual(204)
-
             const usersNow = await helper.usersInDb()
-
             expect(usersNow.length).toBe(usersAtStart.length - 1)
-
 
           })
         })

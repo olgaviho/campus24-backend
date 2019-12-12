@@ -77,15 +77,15 @@ usersRouter.delete('/:id', async (req, res, next) => {
     const decodedToken = jwt.verify(token, process.env.SECRET)
 
     if (!token || !decodedToken.id) {
-      res.status(401).json({ error: 'token missing' })
+      res.status(401).json({ error: 'token missing' }).end()
     }
 
     if (decodedToken.id !== userId) {
-      res.status(401).json({ error: 'token invalid' })
+      res.status(401).json({ error: 'token invalid' }).end()
+    } else {
+      await User.findByIdAndRemove(req.params.id)
+      res.status(204).end()
     }
-
-    await User.findByIdAndRemove(req.params.id)
-    res.status(204).end()
   }
   catch (e) {
     next(e)

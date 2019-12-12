@@ -45,7 +45,7 @@ threadsRouter.delete('/:id', async (req, res, next) => {
 
     const decodedToken = jwt.verify(token, process.env.SECRET)
 
-    if (!token || !decodedToken.id ) {
+    if (!token || !decodedToken.id) {
       res.status(401).json({ error: 'token missing' })
     }
 
@@ -74,19 +74,20 @@ threadsRouter.post('/', async (req, res, next) => {
   try {
     const decodedToken = jwt.verify(token, process.env.SECRET)
     if (!token || !decodedToken.id) {
-      return res.status(401).json({ error: 'token missing or invalid' })
+      return res.status(401).json({ error: 'token missing or invalid' }).end()
+    } else {
+
+      const thread = new Thread({
+        title: body.title,
+        message: body.message,
+        date: new Date(),
+        user: decodedToken.id
+      })
+
+      const savedThread = await thread.save()
+
+      res.json(savedThread.toJSON())
     }
-
-    const thread = new Thread({
-      title: body.title,
-      message: body.message,
-      date: new Date(),
-      user: decodedToken.id
-    })
-
-    const savedThread = await thread.save()
-
-    res.json(savedThread.toJSON())
   } catch (e) {
     next(e)
   }
@@ -94,8 +95,12 @@ threadsRouter.post('/', async (req, res, next) => {
 
 threadsRouter.put('/:id', async (req, res, next) => {
 
+  console.log('NYT ALKAA')
+
   const body = req.body
   const token = getTokenFrom(req)
+
+  console.log('JEE SAATIIN TOKEN', token)
 
   let thread = null
   try {
@@ -104,16 +109,20 @@ threadsRouter.put('/:id', async (req, res, next) => {
   } catch (e) {
     next(e)
   }
-
+  console.log('JEE SAATIIN THREAD', thread)
   try {
 
     const decodedToken = jwt.verify(token, process.env.SECRET)
+    console.log('JEE SAATIIN DECODEDTOKEN', decodedToken)
     if (!token || !decodedToken) {
-      res.status(401).json({ error: 'token missing or' })
+      res.status(401).json({ error: 'token missing' }).end()
     }
 
+    console.log('ID:t', thread.user, decodedToken.id)
+
     if (decodedToken.id !== thread.user) {
-      res.status(401).json({ error: 'token invalid' })
+      console.log('nyt jäit kiinni!')
+      res.status(401).json({ error: 'token invalid' }).end()
     }
 
   }
@@ -122,7 +131,10 @@ threadsRouter.put('/:id', async (req, res, next) => {
   }
 
   try {
-    const thread = await Thread.findById(req.params.id)
+    let thread = await Thread.findById(req.params.id)
+
+    console.log('JEE LÖYTY THREAD (taas)', thread)
+  
     if (body.message === null) {
       throw 'new message missing'
     }
@@ -130,6 +142,8 @@ threadsRouter.put('/:id', async (req, res, next) => {
     thread.message = body.message
     await thread.save()
     res.json(thread.toJSON())
+
+    console.log('NYT LOPPU')
   }
   catch (error) {
     next(error)
