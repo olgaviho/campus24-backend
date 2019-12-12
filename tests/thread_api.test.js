@@ -327,7 +327,8 @@ describe('when there is initially some threads saved', () => {
 
         const threadsBeforeEdit = await helper.threadsInDb()
         const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length-1]
-        const message = 'loppuisipa jo testaus'
+        const message = {
+          message: 'loppuisipa jo testaus' }
 
         await api
           .put(`/api/threads/${threadToEdit.id}`)
