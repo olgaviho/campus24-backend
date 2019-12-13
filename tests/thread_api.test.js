@@ -5,12 +5,6 @@ const api = supertest(app)
 const helper = require('./test_helper')
 const Thread = require('../models/thread')
 
-// threadin muokkaaminen: ilman tokenia, itse keksityllä tokenilla,
-// kaverin tokenilla ja oikealla tokenilla, messagea ei ole
-
-// threadin poistaminen: ilman tokenia, itse keksityllä tokenilla,
-// kaverin tokenilla ja oikealla tokenilla
-
 
 describe('when there is initially some threads saved', () => {
 
@@ -203,10 +197,11 @@ describe('when there is initially some threads saved', () => {
         const editMessage = 'apina on tosi mukava :)'
 
         const threadsStart = await helper.threadsInDb()
-        const indexToEdit = threadsStart[threadsStart.length - 1]
+        const threadToEdit = threadsStart[threadsStart.length - 1]
+
 
         await api
-          .put(`/api/threads/${indexToEdit}`)
+          .put(`/api/threads/${threadToEdit.id}`)
           .send(editMessage)
           .expect(400)
 
@@ -220,12 +215,13 @@ describe('when there is initially some threads saved', () => {
         const editMessage = 'apina on tosi mukava :)'
 
         const threadsStart = await helper.threadsInDb()
-        const indexToEdit = threadsStart[threadsStart.length - 1]
+        const threadToEdit = threadsStart[threadsStart.length - 1]
 
         token = 'bearer feht4895djkst4965'
 
+
         await api
-          .put(`/api/threads/${indexToEdit}`)
+          .put(`/api/threads/${threadToEdit.id}`)
           .send(editMessage)
           .set({ Authorization: token })
           .expect(400)
@@ -271,7 +267,7 @@ describe('when there is initially some threads saved', () => {
         const editMessage = 'apina on tosi mukava :)'
 
         const threadsBeforeEdit = await helper.threadsInDb()
-        const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length-1]
+        const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length - 1]
 
 
         const newUser = {
@@ -286,6 +282,7 @@ describe('when there is initially some threads saved', () => {
         expect(res2.statusCode).toEqual(200)
 
         token2 = `bearer ${res2.body.token}`
+
 
         await api
           .put(`/api/threads/${threadToEdit.id}`)
@@ -326,9 +323,11 @@ describe('when there is initially some threads saved', () => {
           .set({ Authorization: token })
 
         const threadsBeforeEdit = await helper.threadsInDb()
-        const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length-1]
+        const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length - 1]
         const message = {
-          message: 'loppuisipa jo testaus' }
+          message: 'loppuisipa jo testaus'
+        }
+
 
         await api
           .put(`/api/threads/${threadToEdit.id}`)
@@ -341,6 +340,229 @@ describe('when there is initially some threads saved', () => {
         expect(messages).toContain('loppuisipa jo testaus')
 
       })
+
+      test('it is not possible to edit own thread without message', async () => {
+
+        const newUser = {
+          name: 'leo',
+          username: 'leijona',
+          password: 'nappi'
+        }
+
+        const res = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res.statusCode).toEqual(200)
+
+        token = `bearer ${res.body.token}`
+
+        const newThread = {
+          title: 'apinoista vielä vähän lisää',
+          message: 'apina on ruokaa leijonille, mur',
+          date: new Date().toISOString(),
+        }
+
+        await api
+          .post('/api/threads/')
+          .send(newThread)
+          .set({ Authorization: token })
+
+        const threadsBeforeEdit = await helper.threadsInDb()
+        const threadToEdit = threadsBeforeEdit[threadsBeforeEdit.length - 1]
+
+        const message = {
+          tips: 'pipapo'
+        }
+
+        await api
+          .put(`/api/threads/${threadToEdit.id}`)
+          .send(message)
+          .set({ Authorization: token })
+          .expect(400)
+
+        const threadsNow = await api.get('/api/threads')
+        const messages = threadsNow.body.map(t => t.message)
+        expect(messages).toContain('apina on ruokaa leijonille, mur')
+
+      })
+    })
+
+    describe('deleting a thread', async () => {
+
+      beforeEach(async () => {
+
+        const newUser = {
+          name: 'olga',
+          username: 'tipu',
+          password: 'moppi'
+        }
+        await api
+          .post('/api/users')
+          .send(newUser)
+
+        const res1 = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res1.statusCode).toEqual(200)
+
+        const token = `bearer ${res1.body.token}`
+
+        const newThread = {
+          title: 'joulu',
+          message: 'joulu on parasta aikaa',
+          date: new Date().toISOString(),
+        }
+
+        await api
+          .post('/api/threads/')
+          .send(newThread)
+          .set({ Authorization: token })
+
+
+      })
+
+      test('it is not possible to delete thread without token', async () => {
+
+        const threadsStart = await helper.threadsInDb()
+        const threadToDelete = threadsStart[threadsStart.length - 1]
+
+
+        await api
+          .delete(`/api/threads/${threadToDelete.id}`)
+          .expect(400)
+
+        const threadsNow = await api.get('/api/threads')
+
+
+        const messages = threadsNow.body.map(t => t.message)
+        expect(messages).toContain('joulu on parasta aikaa')
+        expect(threadsStart.length).toBe(messages.length)
+
+      })
+      test('it is not possible to delete thread without a valid token', async () => {
+
+        const threadsStart = await helper.threadsInDb()
+
+        const threadToDelete = threadsStart[threadsStart.length - 1]
+
+        token = 'bearer 79feht4895djkst5477094965'
+
+        await api
+          .delete(`/api/threads/${threadToDelete.id}`)
+          .set({ Authorization: token })
+          .expect(400)
+
+        const threadsNow = await api.get('/api/threads')
+
+
+        const messages = threadsNow.body.map(t => t.message)
+        expect(threadsStart.length).toBe(messages.length)
+        expect(messages).toContain('joulu on parasta aikaa')
+
+      })
+
+      test('it is not possible to delete other users thread', async () => {
+
+        const otherUser = {
+          name: 'olga2',
+          username: 'tipu2',
+          password: 'moppi2'
+        }
+        await api
+          .post('/api/users')
+          .send(otherUser)
+          .expect(200)
+
+        const res1 = await api
+          .post('/api/login')
+          .send(otherUser)
+        expect(res1.statusCode).toEqual(200)
+
+        const token1 = `bearer ${res1.body.token}`
+
+        const newThread = {
+          title: 'kesä',
+          message: 'tulisipa jo kesäloma',
+          date: new Date().toISOString(),
+        }
+
+        await api
+          .post('/api/threads/')
+          .send(newThread)
+          .set({ Authorization: token1 })
+          .expect(200)
+
+
+        const threadsBeforeDelete = await helper.threadsInDb()
+        const threadToDelete = threadsBeforeDelete[threadsBeforeDelete.length - 1]
+
+
+        const newUser = {
+          username: 'tipu',
+          password: 'moppi'
+        }
+        const res2 = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res2.statusCode).toEqual(200)
+
+        token2 = `bearer ${res2.body.token}`
+
+
+        await api
+          .delete(`/api/threads/${threadToDelete.id}`)
+          .set({ Authorization: token2 })
+          .expect(401)
+
+        const threadsNow = await api.get('/api/threads')
+
+        const messages = threadsNow.body.map(t => t.message)
+        expect(threadsBeforeDelete.length).toBe(messages.length)
+        expect(messages).toContain('tulisipa jo kesäloma')
+
+      })
+
+      test('it is possible to delete own thread', async () => {
+
+        const newUser = {
+          username: 'tipu',
+          password: 'moppi'
+        }
+
+        const res = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res.statusCode).toEqual(200)
+
+        token = `bearer ${res.body.token}`
+
+        const newThread = {
+          title: 'buaaa milloi tää testaus loppuu',
+          message: 'ei tää varmaan lopu ikinä',
+          date: new Date().toISOString(),
+        }
+
+        await api
+          .post('/api/threads/')
+          .send(newThread)
+          .set({ Authorization: token })
+
+        const threadsBeforeDelete = await helper.threadsInDb()
+
+        const threadToDelete = threadsBeforeDelete[threadsBeforeDelete.length - 1]
+
+        await api
+          .delete(`/api/threads/${threadToDelete.id}`)
+          .set({ Authorization: token })
+          .expect(204)
+
+        const threadsNow = await api.get('/api/threads')
+        const messages = threadsNow.body.map(t => t.message)
+
+        expect(threadsBeforeDelete.length).toBe(messages.length+1)
+
+      })
+
     })
   })
 })

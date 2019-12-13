@@ -18,7 +18,7 @@ commentsRouter.get('/', async (req, res) => {
 })
 
 commentsRouter.get('/:id', (req, res, next) => {
-  Comments.findById(req.params.id).then(comment => {
+  Comment.findById(req.params.id).then(comment => {
     if (comment) {
       res.json(comment.toJSON())
     } else {

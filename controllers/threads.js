@@ -37,24 +37,16 @@ threadsRouter.delete('/:id', async (req, res, next) => {
 
   try {
     thread = await Thread.findById(req.params.id)
-  } catch (e) {
-    next(e)
-  }
-
-  try {
-
     const decodedToken = jwt.verify(token, process.env.SECRET)
 
     if (!token || !decodedToken.id) {
       res.status(401).json({ error: 'token missing' })
-    }
-
-    if (decodedToken.id !== thread.user) {
+    } else if (decodedToken.id !== thread.user) {
       res.status(401).json({ error: 'token invalid' })
+    } else {
+      await Thread.findByIdAndRemove(req.params.id)
+      res.status(204).end()
     }
-
-    await Thread.findByIdAndRemove(req.params.id)
-    res.status(204).end()
   }
   catch (e) {
     next(e)
@@ -114,14 +106,14 @@ threadsRouter.put('/:id', async (req, res, next) => {
     if (!token || !decodedToken) {
       res.status(401).json({ error: 'token missing' })
     } else if (decodedToken.id !== thread.user) {
-      console.log('nyt jäit kiinni!')
+
       res.status(401).json({ error: 'token invalid' })
     } else {
-      console.log('päästiin loppuun asti')
+
       let thread2 = await Thread.findById(req.params.id)
-      console.log('body.message', body.message)
-      console.log('body', body)
+
       if (body.message === null || body.message === undefined) {
+
         res.status(400).json({ error: 'message is missing' })
       } else {
         thread2.message = body.message

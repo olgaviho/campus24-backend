@@ -1,5 +1,6 @@
 const User = require('../models/user')
 const Thread = require('../models/thread')
+const Comment = require('../models/comment')
 
 const initialUsers = [
   {
@@ -23,6 +24,17 @@ const initialThreads = [
   {
     title: 'testaus on työlästä',
     message: 'ja hidasta',
+    date: new Date().toISOString()
+  }
+]
+
+const initialComments = [
+  {
+    message: 'joulu tulee pian',
+    date: new Date().toISOString()
+  },
+  {
+    message: 'oispa jo joulu',
     date: new Date().toISOString()
   }
 ]
@@ -56,6 +68,19 @@ const nonExistingIdForThread = async () => {
   return thread.id.toString()
 }
 
+const nonExistingIdForComment = async () => {
+  const comment = new Comment(
+    {
+      message: 'hiphei',
+      date: new Date().toISOString()
+    }
+  )
+  await comment.save()
+  await comment.remove()
+
+  return comment.id.toString()
+}
+
 const usersInDb = async () => {
   const users = await User.find({})
   return users.map(u => u.toJSON())
@@ -66,7 +91,13 @@ const threadsInDb = async () => {
   return threads.map(u => u.toJSON())
 }
 
+const commentsInDb = async () => {
+  const comments = await Comment.find({})
+  return comments.map(c => c.toJSON())
+}
+
 module.exports = {
   initialUsers, nonExistingIdForUser, usersInDb,
-  threadsInDb, initialThreads, nonExistingIdForThread
+  threadsInDb, initialThreads, nonExistingIdForThread,
+  commentsInDb, nonExistingIdForComment, initialComments
 }
