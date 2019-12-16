@@ -89,6 +89,8 @@ describe('when there is initially some threads saved', () => {
 
       test('it is not possible to add a thread without valid token', async () => {
 
+        const threadsBegin = await helper.threadsInDb()
+
         const newThread = {
           title: 'tipsutkivoja',
           message: 'tipstipstips',
@@ -105,7 +107,7 @@ describe('when there is initially some threads saved', () => {
         expect(res2.statusCode).toEqual(400)
 
         const threadsNow = await helper.threadsInDb()
-        expect(threadsNow.length).toBe(helper.initialThreads.length)
+        expect(threadsNow.length).toBe(threadsBegin.length)
 
       })
 

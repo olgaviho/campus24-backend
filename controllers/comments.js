@@ -32,6 +32,8 @@ commentsRouter.get('/:id', (req, res, next) => {
 
 
 commentsRouter.post('/', async (req, res, next) => {
+
+  // entä jos commentin thread.id on joku random merkkisarja?
   const body = req.body
   const token = getTokenFrom(req)
 
@@ -120,23 +122,19 @@ commentsRouter.put('/:id', async (req, res, next) => {
     const decodedToken = jwt.verify(token, process.env.SECRET)
     if (!token || !decodedToken) {
       res.status(401).json({ error: 'token missing' })
-    }
-    if (decodedToken.id !== comment.user) {
+    } else if (decodedToken.id !== comment.user) {
       res.status(401).json({ error: 'token invalid' })
-    }
+    } else {
 
-  } catch (e) {
-    next(e)
-  }
-
-  try {
-    const comment = await Comment.findById(req.params.id)
-    if (body.message === null) {
-      throw 'new message missing'
+      const comment = await Comment.findById(req.params.id)
+      if (body.message === null || body.message === undefined) {
+        res.status(400).json({ error: 'message is missing' })
+      } else {
+        comment.message = body.message
+        const response = await comment.save()
+        res.json(comment.toJSON())
+      }
     }
-    comment.message = body.message
-    await comment.save()
-    res.json(comment.toJSON())
   }
   catch (error) {
     next(error)
