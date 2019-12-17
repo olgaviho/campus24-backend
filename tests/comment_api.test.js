@@ -317,7 +317,6 @@ describe('when there is initially some comments saved', () => {
         const commentsAtStart = await helper.commentsInDb()
         const commentToEdit = commentsAtStart[commentsAtStart.length - 1]
 
-        console.log('commentToEdit pitäisi olla nuunuu best', commentToEdit)
 
 
         await api
@@ -518,6 +517,191 @@ describe('when there is initially some comments saved', () => {
       })
     })
 
+    describe('deleting a comment', async () => {
+
+      beforeEach(async () => {
+
+        const newUser = {
+          name: 'robotti-imuri',
+          username: 'robotti-imuri',
+          password: 'rob'
+        }
+        await api
+          .post('/api/users')
+          .send(newUser)
+
+        const res1 = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res1.statusCode).toEqual(200)
+
+        const token = `bearer ${res1.body.token}`
+
+        const threads = await helper.commentsInDb()
+        const threadId = threads[threads.length - 1].id
+
+        const newComment = {
+          message: 'joulu on parasta aikaa imureille',
+          date: new Date().toISOString(),
+          threadId: threadId
+        }
+
+        await api
+          .post('/api/comments/')
+          .send(newComment)
+          .set({ Authorization: token })
+
+
+      })
+
+      test('it is not possible to delete a comment without token', async () => {
+
+        const commentsAtStart = await helper.commentsInDb()
+        const commentToDelete = commentsAtStart[commentsAtStart.length - 1]
+
+
+        await api
+          .delete(`/api/comments/${commentToDelete.id}`)
+          .expect(400)
+
+        const commentsNow = await api.get('/api/comments')
+
+
+        const messages = commentsNow.body.map(c => c.message)
+        expect(messages).toContain('joulu on parasta aikaa imureille')
+        expect(commentsAtStart.length).toBe(messages.length)
+
+      })
+      test('it is not possible to delete a comment without a valid token', async () => {
+
+        const commentsAtStart = await helper.commentsInDb()
+
+        const commentsToDelete = commentsAtStart[commentsAtStart.length - 1]
+
+        token = 'bearer 79feht4895djkst5477094965'
+
+        await api
+          .delete(`/api/comments/${commentsToDelete.id}`)
+          .set({ Authorization: token })
+          .expect(400)
+
+        const commentsNow = await api.get('/api/comments')
+
+
+        const messages = commentsNow.body.map(c => c.message)
+        expect(commentsAtStart.length).toBe(messages.length)
+        expect(messages).toContain('joulu on parasta aikaa imureille')
+
+      })
+
+      test('it is not possible to delete other users thread', async () => {
+
+        const otherUser = {
+          name: 'tahvo',
+          username: 'tahvo-imuri',
+          password: 'imuri'
+        }
+        await api
+          .post('/api/users')
+          .send(otherUser)
+          .expect(200)
+
+        const res1 = await api
+          .post('/api/login')
+          .send(otherUser)
+        expect(res1.statusCode).toEqual(200)
+
+        const token1 = `bearer ${res1.body.token}`
+
+        const threads = await helper.commentsInDb()
+        const threadId = threads[threads.length - 1].id
+
+        const newComment = {
+          message: 'joulu on parasta aikaa imureille ja tahvolle',
+          date: new Date().toISOString(),
+          threadId: threadId
+        }
+
+        await api
+          .post('/api/comments/')
+          .send(newComment)
+          .set({ Authorization: token1 })
+          .expect(200)
+
+
+        const commentsBeforeDelete = await helper.commentsInDb()
+        const commentToDelete = commentsBeforeDelete[commentsBeforeDelete.length - 1]
+
+
+        const newUser = {
+          username: 'höppänä',
+          password: 'höppänä'
+        }
+        const res2 = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res2.statusCode).toEqual(200)
+
+        token2 = `bearer ${res2.body.token}`
+
+
+        await api
+          .delete(`/api/comments/${commentToDelete.id}`)
+          .set({ Authorization: token2 })
+          .expect(401)
+
+        const commentsNow = await api.get('/api/comments')
+
+        const messages = commentsNow.body.map(c => c.message)
+        expect(commentsBeforeDelete.length).toBe(messages.length)
+        expect(messages).toContain('joulu on parasta aikaa imureille ja tahvolle')
+
+      })
+
+      test('it is possible to delete own comment', async () => {
+
+        const newUser = {
+          username: 'höppänä',
+          password: 'höppänä'
+        }
+
+        const res = await api
+          .post('/api/login')
+          .send(newUser)
+        expect(res.statusCode).toEqual(200)
+
+        token = `bearer ${res.body.token}`
+
+        const threads = await helper.commentsInDb()
+        const threadId = threads[threads.length - 1].id
+
+        const newComment = {
+          message: 'ei tää testaus varmaan lopu ikinä',
+          date: new Date().toISOString(),
+          threadId: threadId
+        }
+
+        await api
+          .post('/api/comments/')
+          .send(newComment)
+          .set({ Authorization: token })
+
+        const commentsBeforeDelete = await helper.commentsInDb()
+
+        const commentToDelete = commentsBeforeDelete[commentsBeforeDelete.length - 1]
+
+        await api
+          .delete(`/api/comments/${commentToDelete.id}`)
+          .set({ Authorization: token })
+          .expect(204)
+
+        const commentsNow = await api.get('/api/comments')
+        const messages = commentsNow.body.map(c => c.message)
+
+        expect(commentsBeforeDelete.length).toBe(messages.length+1)
+
+      })
+    })
   })
 })
 afterAll(() => {

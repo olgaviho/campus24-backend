@@ -79,24 +79,17 @@ commentsRouter.delete('/:id', async (req, res, next) => {
 
   try {
     comment = await Comment.findById(req.params.id)
-  } catch (e) {
-    next(e)
-  }
-
-  try {
-
     const decodedToken = jwt.verify(token, process.env.SECRET)
 
     if (!token || !decodedToken.id) {
       res.status(401).json({ error: 'token missing' })
-    }
-
-    if (decodedToken.id !== comment.user) {
+    } else if (decodedToken.id !== comment.user) {
       res.status(401).json({ error: 'token invalid' })
-    }
+    } else {
 
-    await Comment.findByIdAndRemove(req.params.id)
-    res.status(204).end()
+      await Comment.findByIdAndRemove(req.params.id)
+      res.status(204).end()
+    }
   }
   catch (e) {
     next(e)

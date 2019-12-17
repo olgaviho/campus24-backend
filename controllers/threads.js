@@ -44,6 +44,7 @@ threadsRouter.delete('/:id', async (req, res, next) => {
     } else if (decodedToken.id !== thread.user) {
       res.status(401).json({ error: 'token invalid' })
     } else {
+
       await Thread.findByIdAndRemove(req.params.id)
       res.status(204).end()
     }
