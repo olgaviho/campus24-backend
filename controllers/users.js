@@ -92,4 +92,52 @@ usersRouter.delete('/:id', async (req, res, next) => {
   }
 })
 
+usersRouter.put('/:id', async (req, res, next) => {
+
+
+
+  const body = req.body
+  const token = getTokenFrom(req)
+
+
+  let userId = null
+
+  try {
+    const user = await User.findById(req.params.id)
+    userId = user.id
+
+  } catch (e) {
+    next(e)
+  }
+
+  try {
+
+    const decodedToken = jwt.verify(token, process.env.SECRET)
+    if (!token || !decodedToken) {
+
+      res.status(401).json({ error: 'token missing' })
+    } else if (decodedToken.id !== userId) {
+
+      res.status(401).json({ error: 'token invalid' })
+    } else if (body.password === null || body.password === undefined) {
+
+      res.status(400).json({ error: 'new password is missing' })
+    } else {
+
+      const saltRounds = 10
+      const passwordHash = await bcrypt.hash(body.password, saltRounds)
+      const user = await User.findById(req.params.id)
+
+      user.passwordHash = passwordHash
+      const response = await user.save()
+
+      res.json(user.toJSON())
+    }
+  }
+
+  catch (error) {
+    next(error)
+  }
+})
+
 module.exports = usersRouter

@@ -259,6 +259,136 @@ describe('when there is initially some users saved', () => {
 
           })
         })
+
+        describe('editing password ', async () => {
+
+          beforeEach(async () => {
+
+            const newUser = {
+              name: 'kapula',
+              username: 'kapula',
+              password: 'kapula'
+            }
+            await api
+              .post('/api/users')
+              .send(newUser)
+
+            const res1 = await api
+              .post('/api/login')
+              .send(newUser)
+            expect(res1.statusCode).toEqual(200)
+
+
+          })
+
+
+          test('it is not possible to edit password without token', async () => {
+            const editPassword = 'nappula'
+
+            const usersAtStart = await helper.usersInDb()
+            const userToEdit = usersAtStart[usersAtStart.length - 1]
+
+            const newUser = {
+              username: 'kapula',
+              password: 'nappula'
+            }
+
+            await api
+              .put(`/api/users/${userToEdit.id}`)
+              .send(editPassword)
+              .expect(400)
+
+            const res = await api
+              .post('/api/login')
+              .send(newUser)
+            expect(res.statusCode).toEqual(401)
+
+          })
+
+
+          test('it is possible to edit own password', async () => {
+
+            let newUser = {
+              username: 'kapula',
+              password: 'kapula'
+            }
+
+            const res = await api
+              .post('/api/login')
+              .send(newUser)
+            expect(res.statusCode).toEqual(200)
+
+            token = `bearer ${res.body.token}`
+
+            const users = await helper.usersInDb()
+            const userId = users[users.length - 1].id
+
+            const password = {
+              password: 'nappula'
+            }
+
+            newUser.password = 'nappula'
+
+            await api
+              .put(`/api/users/${userId}`)
+              .send(password)
+              .set({ Authorization: token })
+              .expect(200)
+
+            const res1 = await api
+              .post('/api/login')
+              .send(newUser)
+            expect(res1.statusCode).toEqual(200)
+
+
+          })
+
+
+          test('it is not possible to edit other users password', async () => {
+
+            const otherUser = {
+              name: 'tonttunen',
+              username: 'tonttunen',
+              password: 'tonttunen'
+            }
+            await api
+              .post('/api/users')
+              .send(otherUser)
+              .expect(200)
+
+            const usersAtStart = await helper.usersInDb()
+            const userToEdit = usersAtStart[usersAtStart.length - 1]
+
+            const editPassword = 'nappula'
+
+            const newUser = {
+              username: 'kapula',
+              password: 'kapula'
+            }
+
+            const res2 = await api
+              .post('/api/login')
+              .send(newUser)
+            expect(res2.statusCode).toEqual(200)
+
+            token2 = `bearer ${res2.body.token}`
+
+            newUser.password = 'nappula'
+
+
+            await api
+              .put(`/api/users/${userToEdit.id}`)
+              .send(editPassword)
+              .set({ Authorization: token2 })
+              .expect(401)
+
+            const res = await api
+              .post('/api/login')
+              .send(newUser)
+            expect(res.statusCode).toEqual(401)
+
+          })
+        })
       })
     })
   })
