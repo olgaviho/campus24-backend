@@ -71,10 +71,144 @@ describe('when there is initially some users saved', () => {
 
     describe('adding a new user ', async () => {
 
-      test('it is not possible to add an invalid user', async () => {
+      test('it is not possible to add a user without username', async () => {
         const newUser = {
           name: 'tipsu',
           password: 'tipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user without name', async () => {
+        const newUser = {
+          username: 'tipsuuuuuuu',
+          password: 'tipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user without password', async () => {
+        const newUser = {
+          username: 'tipsuuuuuuu',
+          name: 'tipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user with too short username', async () => {
+        const newUser = {
+          username: 'ti',
+          name: 'tipsunen',
+          password: 'tipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user with too short name', async () => {
+        const newUser = {
+          name: 'ti',
+          username: 'tipsunen',
+          password: 'tipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user with too long username', async () => {
+        const newUser = {
+          username: 'tips5kups1johh5u8',
+          name: 'tipsunen',
+          password: 'tipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user with too long name', async () => {
+        const newUser = {
+          name: 'tipsunenonparasje',
+          username: 'bwaaa',
+          password: 'tipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user with too long password', async () => {
+        const newUser = {
+          name: 'tipsaa',
+          username: 'bwaaa',
+          password: 'tipstipstipstipstipstipstipstips'
+        }
+
+        await api
+          .post('/api/users')
+          .send(newUser)
+          .expect(400)
+
+        const usersNow = await helper.usersInDb()
+        expect(usersNow.length).toBe(helper.initialUsers.length)
+
+      })
+
+      test('it is not possible to add a user with too short password', async () => {
+        const newUser = {
+          name: 'tipsaa',
+          username: 'bwaaa',
+          password: 'tips'
         }
 
         await api

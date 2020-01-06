@@ -42,6 +42,20 @@ usersRouter.post('/', async (req, res, next) => {
       error: 'content missing'
     })
   }
+
+  if (body.password.length < 5) {
+    return res.status(400).json({
+      error: 'password validation failed'
+    })
+  }
+
+  if (body.password.length > 30) {
+    return res.status(400).json({
+      error: 'password validation failed'
+    })
+  }
+
+
   try {
 
     const saltRounds = 10

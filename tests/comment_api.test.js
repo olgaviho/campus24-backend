@@ -16,7 +16,7 @@ describe('when there is initially some comments saved', () => {
     await Promise.all(promiseArray)
   })
 
-  test('users are returned', async () => {
+  test('comments are returned', async () => {
     await api
       .get('/api/comments')
       .expect(200)
@@ -356,7 +356,7 @@ describe('when there is initially some comments saved', () => {
         const otherUser = {
           name: 'legolas',
           username: 'legolas',
-          password: 'lego'
+          password: 'legobest'
         }
         await api
           .post('/api/users')
@@ -524,7 +524,7 @@ describe('when there is initially some comments saved', () => {
         const newUser = {
           name: 'robotti-imuri',
           username: 'robotti-imuri',
-          password: 'rob'
+          password: 'robbest'
         }
         await api
           .post('/api/users')
